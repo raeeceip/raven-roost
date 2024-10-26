@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: chiso
+  password: password
+  host: localhost
+
+development:
+  <<: *default
+  database: roost_api_development
+
+test:
+  <<: *default
+  database: roost_api_test
+
+production:
+  <<: *default
+  database: roost_api_production
+  username: roost_api
+  password: <%= ENV["ROOST_API_DATABASE_PASSWORD"] %>

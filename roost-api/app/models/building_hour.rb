@@ -1,0 +1,2 @@
+class BuildingHour < ApplicationRecord
+end
