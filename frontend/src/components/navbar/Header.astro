@@ -24,16 +24,14 @@ const menuitems: MenuItem[] = [
 ];
 ---
 
-<header
-	class="fixed w-full bg-[#222222] text-white z-50 border-b-2 border-[#BA0C2F]"
->
+<header class="w-full bg-[#222222] text-white z-50 border-b-2 border-[#BA0C2F]">
 	<Container>
 		<div class="relative flex items-center justify-between h-16 md:h-20">
 			<!-- Logo and Brand -->
 			<div class="flex items-center">
 				<a href="/" class="flex items-center gap-3">
 					<img
-						src="/carleton-logo.svg"
+						src="images/carleton-logo.svg"
 						alt="Carleton University"
 						width="40"
 						height="40"
@@ -127,6 +125,8 @@ const menuitems: MenuItem[] = [
 	const menu = document.getElementById("mobile-menu");
 
 	button?.addEventListener("click", () => {
-		menu.classList.toggle("hidden");
+		if (menu) {
+			menu.classList.toggle("hidden");
+		}
 	});
 </script>
