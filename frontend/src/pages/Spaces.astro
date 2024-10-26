@@ -1,0 +1,83 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SpaceCard from "../components/study-spaces/SpaceCard";
+
+const spaces = [
+	{
+		id: "1",
+		name: "Silent Study Area",
+		building: "MacOdrum Library - 5th Floor",
+		currentOccupancy: 15,
+		capacity: 30,
+		lastUpdated: "5 mins ago",
+		isAvailable: true,
+	},
+	{
+		id: "2",
+		name: "Group Study Room 401",
+		building: "Richcraft Hall",
+		currentOccupancy: 6,
+		capacity: 8,
+		lastUpdated: "2 mins ago",
+		isAvailable: true,
+	},
+	{
+		id: "3",
+		name: "Learning Commons",
+		building: "University Centre",
+		currentOccupancy: 45,
+		capacity: 50,
+		lastUpdated: "1 min ago",
+		isAvailable: true,
+	},
+];
+---
+
+<Layout title="Study Spaces - Roost">
+	<main class="bg-gray-50 min-h-screen py-8">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-[#222222]">Study Spaces</h1>
+				<p class="mt-2 text-[#767679]">
+					Find your perfect study spot at Carleton
+				</p>
+			</div>
+
+			{/* Filters */}
+			<div class="mb-6 bg-white p-4 rounded-lg shadow-sm">
+				<div class="flex flex-wrap gap-4">
+					<select
+						class="block w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-[#BA0C2F] focus:ring-[#BA0C2F]"
+					>
+						<option>All Buildings</option>
+						<option>MacOdrum Library</option>
+						<option>Richcraft Hall</option>
+						<option>University Centre</option>
+					</select>
+
+					<select
+						class="block w-full sm:w-auto rounded-md border-gray-300 shadow-sm focus:border-[#BA0C2F] focus:ring-[#BA0C2F]"
+					>
+						<option>All Types</option>
+						<option>Silent Study</option>
+						<option>Group Study</option>
+						<option>Computer Lab</option>
+					</select>
+
+					<label class="flex items-center space-x-2">
+						<input
+							type="checkbox"
+							class="rounded border-gray-300 text-[#BA0C2F] focus:ring-[#BA0C2F]"
+						/>
+						<span class="text-[#222222]">Available Only</span>
+					</label>
+				</div>
+			</div>
+
+			{/* Space Cards Grid */}
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{spaces.map((space) => <SpaceCard space={space} client:load />)}
+			</div>
+		</div>
+	</main>
+</Layout>

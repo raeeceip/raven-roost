@@ -1,0 +1,78 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Button } from "@/components/ui/button";
+import { MapIcon, SearchIcon } from "lucide-react";
+---
+
+<Layout title="Home - Roost">
+	<main
+		className="pt-20 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100"
+	>
+		<div className="container mx-auto px-4">
+			<!-- Hero Section -->
+			<div className="py-16 md:py-24">
+				<div className="max-w-3xl">
+					<h1 className="text-4xl md:text-5xl font-bold text-[#222222] mb-6">
+						Find Your Perfect Study Space at Carleton
+					</h1>
+					<p className="text-xl text-gray-600 mb-8">
+						Discover available study spaces across campus in real-time. Whether
+						you need a quiet corner or a group study room, Roost helps you find
+						the perfect spot.
+					</p>
+					<div className="flex flex-wrap gap-4">
+						<Button
+							ref="/map"
+							className="bg-[#BA0C2F] hover:bg-[#98091F] text-white px-6 py-2 rounded-md flex items-center gap-2"
+						>
+							<MapIcon className="w-5 h-5" />
+							View Map
+						</Button>
+						<Button
+							ref="/search"
+							variant="outline"
+							className="border-[#BA0C2F] text-[#BA0C2F] hover:bg-[#BA0C2F] hover:text-white px-6 py-2 rounded-md flex items-center gap-2"
+						>
+							<SearchIcon className="w-5 h-5" />
+							Search Spaces
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Features Grid -->
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
+				<div
+					className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+				>
+					<h3 className="text-lg font-semibold text-[#222222] mb-2">
+						Real-time Availability
+					</h3>
+					<p className="text-gray-600">
+						See which study spaces are currently available across campus.
+					</p>
+				</div>
+				<div
+					className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+				>
+					<h3 className="text-lg font-semibold text-[#222222] mb-2">
+						Interactive Map
+					</h3>
+					<p className="text-gray-600">
+						Navigate campus easily with our interactive map interface.
+					</p>
+				</div>
+				<div
+					className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+				>
+					<h3 className="text-lg font-semibold text-[#222222] mb-2">
+						Advanced Search
+					</h3>
+					<p className="text-gray-600">
+						Filter spaces by capacity, amenities, and noise level.
+					</p>
+				</div>
+			</div>
+		</div>
+	</main>
+</Layout>

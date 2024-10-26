@@ -1,0 +1,11 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ProfileComponent from "../components/profile/ProfileComponent";
+---
+
+<Layout title="Profile - Roost">
+	<main class="container mx-auto px-4 py-8">
+		<h1 class="text-4xl font-bold mb-8">Your Profile</h1>
+		<ProfileComponent client:load />
+	</main>
+</Layout>

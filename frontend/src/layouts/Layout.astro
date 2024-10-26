@@ -1,0 +1,31 @@
+---
+import Header from "../components/navbar/Header.astro";
+import Footer from "../components/Footer.astro";
+import "@fontsource-variable/inter/index.css";
+import "../../src/styles/globals.css";
+
+export interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="Carleton Study Space Finder" />
+		<title>{title} | Roost - Carleton Study Spaces</title>
+	</head>
+	<body class="flex flex-col min-h-screen bg-gray-50">
+		<Header />
+		<main class="flex-grow">
+			<slot />
+		</main>
+		<Footer />
+	</body>
+</html>

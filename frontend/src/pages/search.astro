@@ -1,0 +1,23 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Container from "../components/Container.astro";
+import { Input } from "@/components/ui/input";
+import SearchComponent from "../components/search/SearchComponent";
+---
+
+<Layout title="Search Study Spaces - Roost">
+	<main class="pt-20 min-h-screen bg-gray-50">
+		<Container>
+			<div class="py-8">
+				<h1 class="text-3xl font-bold text-carleton-black mb-4">
+					Search Study Spaces
+				</h1>
+				<p class="text-gray-600 mb-8">
+					Find the perfect study space for your needs
+				</p>
+
+				<SearchComponent client:load />
+			</div>
+		</Container>
+	</main>
+</Layout>
