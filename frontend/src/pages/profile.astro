@@ -1,6 +1,5 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { validateToken } from "../lib/auth";
 ---
 
 <Layout title="Profile - Roost">
@@ -89,7 +88,7 @@ import { validateToken } from "../lib/auth";
 			} catch (error) {
 				console.error("Profile load error:", error);
 				loading?.classList.add("hidden");
-				error?.classList.remove("hidden");
+				(error as HTMLElement)?.classList.remove("hidden");
 			}
 		}
 

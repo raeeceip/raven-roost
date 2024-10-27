@@ -90,6 +90,3 @@ gem 'omniauth-rails_csrf_protection'
 gem 'elasticsearch-model'
 gem 'elasticsearch-rails'
 gem 'searchkick'
-
-# Background jobs for indexing
-gem 'sidekiq'
