@@ -1,23 +1,45 @@
-# fly.toml app configuration file generated for roost-api on 2024-10-27T11:15:08-04:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+app = "roost-api"
+primary_region = "yul"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
 
-app = 'roost-api'
-primary_region = 'yul'
-console_command = '/rails/bin/rails console'
+[env]
+  PORT = "3000"
+  RAILS_SERVE_STATIC_FILES = "true"
+  BIND = "0.0.0.0"
 
-[build]
+[experimental]
+  auto_rollback = true
 
-[http_service]
+[[services]]
+  protocol = "tcp"
   internal_port = 3000
-  force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+  processes = ["app"]
 
-[[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
-  cpus = 1
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[statics]]
+  guest_path = "/rails/public"
+  url_prefix = "/"
+
+[mounts]
+  source = "rails_data"
+  destination = "/data"
+
+[deploy]
+  release_command = "bin/rails db:migrate"
+
+[processes]
+  app = "bin/rails server"

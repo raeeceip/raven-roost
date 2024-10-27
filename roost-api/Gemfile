@@ -69,10 +69,6 @@ end
 
 # Testing
 group :development, :test do
-  gem 'rswag'
-  gem 'rswag-ui'
-  gem 'rswag-api'
-  gem 'rswag-specs'
   gem 'rspec-rails'
   gem 'factory_bot_rails'
   gem 'faker'
@@ -90,3 +86,6 @@ gem 'omniauth-rails_csrf_protection'
 gem 'elasticsearch-model'
 gem 'elasticsearch-rails'
 gem 'searchkick'
+# API Documentation
+gem 'rswag-api'
+gem 'rswag-ui'

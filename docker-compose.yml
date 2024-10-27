@@ -1,21 +1,75 @@
-version: '3'
+version: "3.8"
 
 services:
+  frontend:
+    build: ./frontend
+    container_name: roost-frontend
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - roost-network
+
+  backend:
+    build: ./roost-api
+    container_name: roost-backend
+    environment:
+      - RAILS_ENV=production
+      - DATABASE_URL=postgres://postgres:${DB_PASSWORD}@db:5432/roost_production
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - db
+      - elasticsearch
+    restart: unless-stopped
+    networks:
+      - roost-network
+
+  db:
+    image: postgres:14-alpine
+    container_name: roost-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=roost_production
+    restart: unless-stopped
+    networks:
+      - roost-network
+
   elasticsearch:
-    image: elasticsearch:8.11.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: roost-elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
+      - xpack.security.enabled=false
     volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - roost-network
 
-  redis:
-    image: redis:7.2
+  caddy:
+    image: caddy:2
+    container_name: roost-caddy
     ports:
-      - "6379:6379"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - roost-network
 
 volumes:
-  elasticsearch-data:
+  postgres_data:
+  elasticsearch_data:
+
+networks:
+  roost-network:
+    driver: bridge

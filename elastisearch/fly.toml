@@ -1,0 +1,23 @@
+app = "roost-api-elasticsearch"
+primary_region = "ord"
+
+[build]
+  image = "docker.elastic.co/elasticsearch/elasticsearch:8.11.1"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 9200
+  processes = ["app"]
+
+[[services.ports]]
+  port = 9200
+  handlers = ["http"]
+
+[env]
+  discovery.type = "single-node"
+  xpack.security.enabled = "false"
+  ES_JAVA_OPTS = "-Xms512m -Xmx512m"
+
+[mounts]
+  source = "elasticsearch_data"
+  destination = "/usr/share/elasticsearch/data"
