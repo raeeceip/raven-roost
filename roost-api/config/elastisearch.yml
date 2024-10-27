@@ -1,0 +1,20 @@
+# config/elasticsearch.yml
+development:
+  host: http://localhost:9200
+  transport_options:
+    request:
+      timeout: 5
+
+test:
+  host: http://localhost:9200
+  transport_options:
+    request:
+      timeout: 5
+
+production:
+  host: http://localhost:9200
+  transport_options:
+    request:
+      timeout: 10
+  user: <%= ENV['ELASTICSEARCH_USER'] %>
+  password: <%= ENV['ELASTICSEARCH_PASSWORD'] %>

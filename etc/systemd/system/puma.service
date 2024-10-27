@@ -1,0 +1,15 @@
+[Unit]
+Description=Puma Rails Server
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/var/www/ravens-roost/backend
+Environment=RAILS_ENV=production
+Environment=PATH=/home/deploy/.rbenv/shims:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/deploy/.rbenv/shims/bundle exec puma -C config/puma.rb
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
