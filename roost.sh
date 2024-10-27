@@ -1,336 +1,214 @@
 #!/bin/bash
+set -e
 
-# wsl2_roost_setup.sh - Complete WSL2 setup script for Roost Study Space Finder
-
-# Color codes for prettier output
-RED='\033[0;31m'
+# Colors for output
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-print_step() { echo -e "${BLUE}==>${NC} $1"; }
-print_success() { echo -e "${GREEN}==>${NC} $1"; }
-print_error() { echo -e "${RED}==>${NC} $1"; }
-print_warning() { echo -e "${YELLOW}==>${NC} $1"; }
+# Configuration
+DOMAIN="ravens-roost.xyz"
+API_SUBDOMAIN="api.ravens-roost.xyz"
+APP_SUBDOMAIN="app.ravens-roost.xyz"
 
-# Check if running in WSL2
-check_wsl2() {
-    if ! grep -q "microsoft" /proc/version &> /dev/null; then
-        print_error "This script must be run in WSL2"
-        print_error "Please install WSL2 first using:"
-        print_error "PowerShell (Admin): wsl --install"
-        exit 1
-    fi
+echo -e "${GREEN}Starting deployment for ${DOMAIN}...${NC}"
 
-    if [ "$(wslpath 'C:' 2>/dev/null)" = "" ]; then
-        print_error "WSL2 is not properly configured"
-        exit 1
-    fi
-}
+# Update system
+echo -e "${GREEN}Updating system packages...${NC}"
+sudo apt-get update && sudo apt-get upgrade -y
 
-# Install system dependencies
-install_system_dependencies() {
-    print_step "Updating system packages..."
-    sudo apt-get update
-    sudo apt-get upgrade -y
+# Install Docker and Docker Compose
+echo -e "${GREEN}Installing Docker and Docker Compose...${NC}"
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-compose
+sudo usermod -aG docker $USER
 
-    print_step "Installing system dependencies..."
-    sudo apt-get install -y \
-        autoconf \
-        bison \
-        build-essential \
-        curl \
-        git \
-        libdb-dev \
-        libffi-dev \
-        libgdbm-dev \
-        libgdbm6 \
-        libncurses5-dev \
-        libpq-dev \
-        libreadline-dev \
-        libreadline6-dev \
-        libsqlite3-dev \
-        libssl-dev \
-        libyaml-dev \
-        pkg-config \
-        sqlite3 \
-        zlib1g-dev
-}
+# Install Node.js (for Astro)
+echo -e "${GREEN}Installing Node.js...${NC}"
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+sudo npm install -g yarn
 
-# Install Node.js using nvm
-install_node() {
-    print_step "Installing Node.js..."
-    
-    # Install nvm if not present
-    if [ ! -d "$HOME/.nvm" ]; then
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-        
-        # Add nvm to current session
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    fi
-    
-    # Install Node.js LTS
-    nvm install --lts
-    nvm use --lts
-    
-    # Install common global packages
-    npm install -g npm@latest
-}
+# Create directory structure
+echo -e "${GREEN}Creating directory structure...${NC}"
+mkdir -p ~/roost/{frontend,backend,elasticsearch,caddy}
 
-# Install and configure RVM with Ruby
-install_ruby() {
-    print_step "Installing RVM and Ruby..."
-    
-    # Install RVM if not present
-    if ! command -v rvm &> /dev/null; then
-        # Install RVM GPG keys
-        curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-        curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
-        
-        # Install RVM
-        curl -sSL https://get.rvm.io | bash -s stable
-        source $HOME/.rvm/scripts/rvm
-        
-        # Add RVM to shell configuration
-        echo "source $HOME/.rvm/scripts/rvm" >> ~/.bashrc
-    fi
-    
-    # Load RVM
-    source $HOME/.rvm/scripts/rvm
-    
-    # Install Ruby
-    rvm install 3.2.2
-    rvm use 3.2.2 --default
-    
-    # Install Bundler
-    gem install bundler
-}
+# Create docker-compose.yml
+echo -e "${GREEN}Creating Docker Compose configuration...${NC}"
+cat > ~/roost/docker-compose.yml << EOL
+version: '3.8'
 
-# Install Rails
-install_rails() {
-    print_step "Installing Rails..."
-    gem install rails -v 7.1.2
-}
+services:
+  frontend:
+    build: ./frontend
+    container_name: roost-frontend
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
 
-# Setup project structure
-setup_project() {
-    print_step "Setting up Roost project..."
-    
-    # Create project directory
-    mkdir -p ~/projects/roost
-    cd ~/projects/roost
-    
-    # Initialize new Rails API
-    print_step "Creating Rails API..."
-    rails new backend --api --database=sqlite3 \
-        --skip-test \
-        --skip-action-mailer \
-        --skip-action-mailbox \
-        --skip-action-text \
-        --skip-active-storage \
-        --skip-action-cable
-    
-    cd backend
-    
-    # Update Gemfile
-    print_step "Configuring Gemfile..."
-    cat >> Gemfile << EOL
+  backend:
+    build: ./backend
+    container_name: roost-backend
+    environment:
+      - RAILS_ENV=production
+      - DATABASE_URL=postgres://postgres:\${DB_PASSWORD}@db:5432/roost_production
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - RAILS_MASTER_KEY=\${RAILS_MASTER_KEY}
+    depends_on:
+      - db
+      - elasticsearch
+    restart: unless-stopped
 
-# API and serialization
-gem 'rack-cors'
-gem 'jsonapi-serializer'
-gem 'oj'
+  db:
+    image: postgres:14-alpine
+    container_name: roost-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=\${DB_PASSWORD}
+      - POSTGRES_DB=roost_production
+    restart: unless-stopped
 
-# Location and mapping
-gem 'geocoder'
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: roost-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
 
-# Testing
-group :development, :test do
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
-  gem 'faker'
-  gem 'pry-rails'
-  gem 'dotenv-rails'
-end
+  caddy:
+    image: caddy:2-alpine
+    container_name: roost-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
 
-group :development do
-  gem 'annotate'
-  gem 'rubocop'
-  gem 'rubocop-rails'
-  gem 'brakeman'
-  gem 'bullet'
-end
+volumes:
+  postgres_data:
+  elasticsearch_data:
+  caddy_data:
+  caddy_config:
 EOL
-    
-    # Install dependencies
-    print_step "Installing Ruby dependencies..."
-    bundle install
-    
-    # Generate RSpec configuration
-    rails generate rspec:install
-    
-    # Configure CORS
-    print_step "Configuring CORS..."
-    cat > config/initializers/cors.rb << EOL
-Rails.application.config.middleware.insert_before 0, Rack::Cors do
-  allow do
-    origins 'http://localhost:4321'
-    resource '*',
-      headers: :any,
-      methods: [:get, :post, :patch, :put, :delete, :options, :head],
-      credentials: true
-  end
-end
-EOL
-    
-    cd ..
-    
-    # Setup Astro frontend
-    print_step "Setting up Astro frontend..."
-    npm create astro@latest frontend --template basics --typescript --tailwind --yes
-    cd frontend
-    
-    # Install dependencies
-    npm install \
-        @astrojs/react \
-        @astrojs/tailwind \
-        @astrojs/image \
-        @astrojs/prefetch \
-        react \
-        react-dom \
-        @types/react \
-        @types/react-dom \
-        axios \
-        leaflet \
-        @types/leaflet \
-        @headlessui/react \
-        lucide-react \
-        zustand \
-        @tanstack/react-query
-    
-    # Configure Astro
-    cat > astro.config.mjs << EOL
-import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
-import prefetch from '@astrojs/prefetch';
 
-export default defineConfig({
-  integrations: [
-    react(),
-    tailwind(),
-    prefetch()
-  ],
-  output: 'hybrid'
-});
+# Create Caddyfile
+echo -e "${GREEN}Creating Caddy configuration...${NC}"
+mkdir -p ~/roost/caddy
+cat > ~/roost/caddy/Caddyfile << EOL
+${API_SUBDOMAIN} {
+    reverse_proxy backend:3000
+}
+
+${APP_SUBDOMAIN} {
+    reverse_proxy frontend:4321
+}
 EOL
-    
-    # Create project structure
-    mkdir -p src/{components,layouts,pages,store,utils,assets}
-    mkdir -p src/components/{ui,map,study-spaces}
-    
-    cd ..
-    
-    # Create development script
-    print_step "Creating development script..."
-    cat > dev.sh << EOL
+
+# Create environment file
+echo -e "${GREEN}Creating environment file...${NC}"
+cat > ~/roost/.env << EOL
+DB_PASSWORD=$(openssl rand -base64 32)
+RAILS_MASTER_KEY=$(openssl rand -base64 32)
+EOL
+
+# Create deployment script for updating the application
+cat > ~/roost/update.sh << 'EOL'
+#!/bin/bash
+set -e
+
+echo "Pulling latest changes..."
+cd ~/roost/frontend && git pull
+cd ~/roost/backend && git pull
+
+echo "Rebuilding containers..."
+docker-compose build
+
+echo "Restarting services..."
+docker-compose up -d
+
+echo "Running database migrations..."
+docker-compose exec backend rails db:migrate
+
+echo "Reindexing Elasticsearch..."
+docker-compose exec backend rails elasticsearch:reindex
+
+echo "Update completed successfully!"
+EOL
+chmod +x ~/roost/update.sh
+
+# Create initialization script for the Rails app
+cat > ~/roost/init-rails.sh << 'EOL'
+#!/bin/bash
+set -e
+
+echo "Setting up Rails database..."
+docker-compose exec backend rails db:create
+docker-compose exec backend rails db:migrate
+docker-compose exec backend rails db:seed
+
+echo "Setting up Elasticsearch indices..."
+docker-compose exec backend rails elasticsearch:setup
+docker-compose exec backend rails elasticsearch:reindex
+
+echo "Rails initialization completed!"
+EOL
+chmod +x ~/roost/init-rails.sh
+
+# Create health check script
+cat > ~/roost/health-check.sh << EOL
 #!/bin/bash
 
-# Trap ctrl-c and call cleanup
-cleanup() {
-    echo "Stopping servers..."
-    kill \$RAILS_PID \$ASTRO_PID 2>/dev/null
-    exit 0
-}
-trap cleanup INT TERM
+echo "Checking services health..."
+docker-compose ps
 
-# Start Rails server
-cd backend
-echo "Starting Rails server..."
-rails server &
-RAILS_PID=\$!
+echo -e "\nChecking Elasticsearch:"
+curl -s http://localhost:9200/_cluster/health | grep -o '"status":"[^"]*"'
 
-# Start Astro dev server
-cd ../frontend
-echo "Starting Astro dev server..."
-npm run dev &
-ASTRO_PID=\$!
+echo -e "\nChecking PostgreSQL:"
+docker-compose exec db pg_isready
 
-# Wait for processes
-wait
+echo -e "\nChecking Rails API:"
+curl -I http://${API_SUBDOMAIN}
+
+echo -e "\nChecking Frontend:"
+curl -I http://${APP_SUBDOMAIN}
 EOL
-    
-    chmod +x dev.sh
-}
+chmod +x ~/roost/health-check.sh
 
-# Configure Git
-setup_git() {
-    print_step "Configuring Git..."
-    
-    if [ ! -f ~/.gitconfig ]; then
-        print_step "Enter your Git configuration:"
-        read -p "Name: " git_name
-        read -p "Email: " git_email
-        
-        git config --global user.name "$git_name"
-        git config --global user.email "$git_email"
-        git config --global init.defaultBranch main
-        git config --global core.editor "code --wait"
-    fi
-    
-    # Initialize Git repository
-    cd ~/projects/roost
-    git init
-    
-    # Create .gitignore
-    cat > .gitignore << EOL
-# Rails
-/backend/.bundle
-/backend/log/*
-/backend/tmp/*
-/backend/db/*.sqlite3
-/backend/db/*.sqlite3-*
-/backend/storage/*
-/backend/.env*
+echo -e "${GREEN}Deployment script created successfully!${NC}"
+echo -e "${GREEN}Next steps:${NC}"
+echo "1. Update your domain DNS settings:"
+echo "   Add A records for ${API_SUBDOMAIN} and ${APP_SUBDOMAIN} pointing to your server IP"
+echo "2. Clone your repositories:"
+echo "   git clone <frontend-repo> ~/roost/frontend"
+echo "   git clone <backend-repo> ~/roost/backend"
+echo "3. Start the services:"
+echo "   cd ~/roost && docker-compose up -d"
+echo "4. Initialize the Rails application:"
+echo "   ./init-rails.sh"
+echo "5. Monitor the health of your services:"
+echo "   ./health-check.sh"
 
-# Node
-node_modules/
-/frontend/.env*
-/frontend/dist
-.DS_Store
-EOL
-}
-
-# Main setup process
-main() {
-    # Verify we're in WSL2
-    check_wsl2
-    
-    print_step "Starting Roost setup in WSL2..."
-    
-    # Install system dependencies
-    install_system_dependencies
-    
-    # Install development tools
-    install_node
-    install_ruby
-    install_rails
-    
-    # Setup project
-    setup_project
-    
-    # Configure Git
-    setup_git
-    
-    print_success "Roost setup complete!"
-    print_success "Your development environment is ready:"
-    echo -e "${GREEN}  * Rails API: ${NC}http://localhost:3000"
-    echo -e "${GREEN}  * Astro frontend: ${NC}http://localhost:4321"
-    print_success "To start development servers:"
-    echo -e "${BLUE}  cd ~/projects/roost && ./dev.sh${NC}"
-}
-
-# Run main setup
-main
+# Instructions for DNS setup
+echo -e "\n${GREEN}DNS Setup Instructions:${NC}"
+echo "1. Go to your domain registrar's DNS settings"
+echo "2. Add the following A records:"
+echo "   ${API_SUBDOMAIN} -> $(curl -s ifconfig.me)"
+echo "   ${APP_SUBDOMAIN} -> $(curl -s ifconfig.me)"
+echo "3. Wait for DNS propagation (can take up to 48 hours)"
