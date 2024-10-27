@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: elasticsearch:7.10.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    networks:
+      - backend-network
+
+  go-backend:
+    build: .
+    container_name: go-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - elasticsearch
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
