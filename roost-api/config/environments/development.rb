@@ -55,6 +55,7 @@ Rails.application.configure do
 
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
+  config.frontend_url = 'http://localhost:4321'
 
 
   # Raises error for missing translations.

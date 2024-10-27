@@ -1,7 +1,7 @@
+# app/controllers/api/v1/spaces_controller.rb
 module Api
   module V1
     class SpacesController < BaseController
-      skip_before_action :authenticate_user!, only: [:index, :show]
       before_action :set_space, only: [:show, :update, :destroy, :update_occupancy]
 
       def index
@@ -9,11 +9,11 @@ module Api
         @spaces = @spaces.where(building: params[:building]) if params[:building].present?
         @spaces = @spaces.where(status: params[:status]) if params[:status].present?
 
-        render json: SpaceSerializer.new(@spaces, include: [:space_amenities]).serializable_hash
+        render json: @spaces, include: [:space_amenities]
       end
 
       def show
-        render json: SpaceSerializer.new(@space, include: [:space_amenities]).serializable_hash
+        render json: @space, include: [:space_amenities]
       end
 
       def create
@@ -21,17 +21,33 @@ module Api
         @space = Space.new(space_params)
 
         if @space.save
-          render json: SpaceSerializer.new(@space).serializable_hash, status: :created
+          render json: @space, status: :created
         else
           render json: { errors: @space.errors }, status: :unprocessable_entity
         end
+      end
+
+      def update
+        authorize @space
+
+        if @space.update(space_params)
+          render json: @space
+        else
+          render json: { errors: @space.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def destroy
+        authorize @space
+        @space.destroy
+        head :no_content
       end
 
       def update_occupancy
         authorize @space
         
         if @space.update_occupancy!(params[:occupancy])
-          render json: SpaceSerializer.new(@space).serializable_hash
+          render json: @space
         else
           render json: { errors: @space.errors }, status: :unprocessable_entity
         end

@@ -1,0 +1,36 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Authentication - Processing">
+	<div class="flex items-center justify-center min-h-screen">
+		<div class="text-center">
+			<div
+				class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"
+			>
+			</div>
+			<p class="text-lg text-gray-600">Processing authentication...</p>
+		</div>
+	</div>
+
+	<script>
+		// Handle the callback and token storage
+		document.addEventListener("DOMContentLoaded", async () => {
+			const params = new URLSearchParams(window.location.search);
+			const token = params.get("token");
+
+			if (token) {
+				try {
+					localStorage.setItem("auth_token", token);
+					// Redirect to profile page
+					window.location.href = "/profile";
+				} catch (error) {
+					console.error("Auth error:", error);
+					window.location.href = "/login?error=auth_failed";
+				}
+			} else {
+				window.location.href = "/login?error=no_token";
+			}
+		});
+	</script>
+</Layout>

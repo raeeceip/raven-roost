@@ -76,5 +76,20 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'factory_bot_rails'
   gem 'faker'
+  gem 'pundit'
   gem 'dotenv-rails'
 end
+
+# OAuth
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
+gem 'omniauth-microsoft-office365'
+gem 'omniauth-rails_csrf_protection'
+
+# Elasticsearch
+gem 'elasticsearch-model'
+gem 'elasticsearch-rails'
+gem 'searchkick'
+
+# Background jobs for indexing
+gem 'sidekiq'

@@ -1,22 +1,18 @@
+# app/models/user.rb
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :trackable, :jwt_authenticatable, 
-         jwt_revocation_strategy: JwtDenylist
+         :omniauthable, omniauth_providers: [:google_oauth2]
 
-  has_many :bookings
-  has_many :favorite_spaces
-  has_many :favorited_spaces, through: :favorite_spaces, source: :space
-
-  validates :name, presence: true
-  validates :email, presence: true, uniqueness: true
-  validates :role, inclusion: { in: %w[admin staff user] }
-
-  def admin?
-    role == 'admin'
-  end
-
-  def staff?
-    role == 'staff'
+  def self.from_omniauth(auth)
+    Rails.logger.info "Processing OAuth data: #{auth.info.email}" # Add logging
+    
+    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
+      user.email = auth.info.email
+      user.password = Devise.friendly_token[0, 20]
+      user.name = auth.info.name
+      user.role = 'user'
+      user.image = auth.info.image # Add this line if you have the image field
+    end
   end
 end

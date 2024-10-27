@@ -1,36 +1,32 @@
 ---
+import { onMount } from "solid-js";
 import Layout from "../layouts/Layout.astro";
 import SpaceCard from "../components/study-spaces/SpaceCard";
 
-const spaces = [
-	{
-		id: "1",
-		name: "Silent Study Area",
-		building: "MacOdrum Library - 5th Floor",
-		currentOccupancy: 15,
-		capacity: 30,
-		lastUpdated: "5 mins ago",
-		isAvailable: true,
-	},
-	{
-		id: "2",
-		name: "Group Study Room 401",
-		building: "Richcraft Hall",
-		currentOccupancy: 6,
-		capacity: 8,
-		lastUpdated: "2 mins ago",
-		isAvailable: true,
-	},
-	{
-		id: "3",
-		name: "Learning Commons",
-		building: "University Centre",
-		currentOccupancy: 45,
-		capacity: 50,
-		lastUpdated: "1 min ago",
-		isAvailable: true,
-	},
-];
+let spaces: any[] = [];
+let loading = true;
+let error = null;
+
+onMount(async () => {
+	try {
+		const response = await fetch("http://localhost:3001/api/v1/spaces", {
+			credentials: "include", // Include credentials (cookies) in requests
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json",
+			},
+		});
+		if (!response.ok) {
+			throw new Error("Failed to fetch spaces");
+		}
+		const data = await response.json();
+		spaces = data.spaces; // Adjust this based on your API response structure
+	} catch (err) {
+		error = err.message;
+	} finally {
+		loading = false;
+	}
+});
 ---
 
 <Layout title="Study Spaces - Roost">
@@ -75,9 +71,19 @@ const spaces = [
 			</div>
 
 			{/* Space Cards Grid */}
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{spaces.map((space) => <SpaceCard space={space} client:load />)}
-			</div>
+			{
+				loading ? (
+					<div>Loading...</div>
+				) : error ? (
+					<div>Error: {error}</div>
+				) : (
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						{spaces.map((space) => (
+							<SpaceCard space={space} client:load />
+						))}
+					</div>
+				)
+			}
 		</div>
 	</main>
 </Layout>

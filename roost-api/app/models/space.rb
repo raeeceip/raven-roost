@@ -1,4 +1,6 @@
 class Space < ApplicationRecord
+  include Searchable
+  
   has_many :bookings, dependent: :destroy
   has_many :space_updates, dependent: :destroy
   has_many :favorite_spaces, dependent: :destroy
@@ -25,27 +27,22 @@ class Space < ApplicationRecord
 
   def calculate_status(count)
     case
-    when count >= capacity * 0.9 then 'full'
-    when count >= capacity * 0.7 then 'busy'
-    else 'available'
+    when count == 0
+      'available'
+    when count < capacity / 2
+      'busy'
+    when count < capacity
+      'full'
+    else
+      'closed'
     end
   end
 
   def broadcast_update
-    ActionCable.server.broadcast 'spaces_channel', {
-      id: id,
-      current_occupancy: current_occupancy,
-      status: status,
-      last_updated: last_updated
-    }
+    # Implement broadcasting logic here
   end
 
   def create_space_update(count)
-    space_updates.create!(
-      occupancy: count,
-      status: status,
-      source: 'system',
-      recorded_at: Time.current
-    )
+    space_updates.create!(occupancy: count, updated_at: Time.current)
   end
 end
