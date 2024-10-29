@@ -27,6 +27,9 @@ _yardoc
 .secret
 .env
 .byebug_history
+elasticsearch-8.11.1
+Binaries
+vendor
 
 # Astro frontend
 node_modules/
