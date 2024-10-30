@@ -1,0 +1,18 @@
+---
+import Layout from "../Layout.astro";
+import Container from "../components/Container.astro";
+import SearchComponent from "../components/search/SearchComponent";
+const { study_spaces, buildings } = Astro.props;
+---
+
+<Layout title="Study Spaces - Roost">
+	<main class="pt-20 min-h-screen bg-gray-50">
+		<Container>
+			<SearchComponent
+				client:load
+				initialSpaces={study_spaces}
+				buildings={buildings}
+			/>
+		</Container>
+	</main>
+</Layout>

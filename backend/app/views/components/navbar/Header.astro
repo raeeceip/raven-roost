@@ -1,0 +1,132 @@
+---
+// Header.astro
+import Container from "../Container.astro";
+import { buttonVariants } from "@/components/ui/button";
+
+interface MenuItem {
+	title: string;
+	path: string;
+}
+
+const menuitems: MenuItem[] = [
+	{
+		title: "Study Spaces",
+		path: "/Spaces",
+	},
+	{
+		title: "Map",
+		path: "/map",
+	},
+	{
+		title: "Search",
+		path: "/search",
+	},
+];
+---
+
+<header class="w-full bg-[#222222] text-white z-50 border-b-2 border-[#BA0C2F]">
+	<Container>
+		<div class="relative flex items-center justify-between h-16 md:h-20">
+			<!-- Logo and Brand -->
+			<div class="flex items-center">
+				<a href="/" class="flex items-center gap-3">
+					<img
+						src="images/carleton-logo.svg"
+						alt="Carleton University"
+						width="40"
+						height="40"
+						class="w-10 h-10"
+					/>
+					<div class="flex flex-col">
+						<span class="font-bold text-xl leading-none">Roost</span>
+						<span class="text-xs text-gray-400">Study Space Finder</span>
+					</div>
+				</a>
+			</div>
+
+			<!-- Desktop Navigation -->
+			<nav class="hidden md:flex items-center gap-8">
+				{
+					menuitems.map((item) => (
+						<a
+							href={item.path}
+							class="text-sm font-medium text-gray-300 hover:text-white hover:underline decoration-[#BA0C2F] decoration-2 underline-offset-8 transition-all"
+						>
+							{item.title}
+						</a>
+					))
+				}
+			</nav>
+
+			<!-- Profile Button -->
+			<div class="hidden md:flex items-center gap-4">
+				<a
+					href="/profile"
+					class={buttonVariants({
+						variant: "outline",
+						class:
+							"border-[#BA0C2F] text-white hover:bg-[#BA0C2F] hover:text-white transition-all",
+					})}
+				>
+					Profile
+				</a>
+			</div>
+
+			<!-- Mobile Menu Button -->
+			<button
+				type="button"
+				id="mobile-menu-button"
+				class="md:hidden p-2 text-gray-400 hover:text-white transition-colors"
+				aria-label="Toggle menu"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="w-6 h-6"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+				</svg>
+			</button>
+		</div>
+
+		<!-- Mobile Menu (Hidden by default) -->
+		<div id="mobile-menu" class="hidden md:hidden border-t border-gray-700">
+			<div class="px-2 pt-2 pb-3 space-y-1">
+				{
+					menuitems.map((item) => (
+						<a
+							href={item.path}
+							class="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-[#BA0C2F]/10 rounded-md transition-colors"
+						>
+							{item.title}
+						</a>
+					))
+				}
+				<a
+					href="/profile"
+					class="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-[#BA0C2F]/10 rounded-md transition-colors"
+				>
+					Profile
+				</a>
+			</div>
+		</div>
+	</Container>
+</header>
+
+<script>
+	// Mobile menu toggle
+	const button = document.getElementById("mobile-menu-button");
+	const menu = document.getElementById("mobile-menu");
+
+	button?.addEventListener("click", () => {
+		if (menu) {
+			menu.classList.toggle("hidden");
+		}
+	});
+</script>
