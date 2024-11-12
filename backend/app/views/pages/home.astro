@@ -1,31 +1,84 @@
-// app/views/pages/home.astro
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import { Button } from "../../components/ui/button";
+import {
+	MapIcon,
+	SearchIcon,
+	ClockIcon,
+	CompassIcon,
+	FilterIcon,
+	ArrowRightIcon,
+} from "lucide-react";
 
-import Layout from "../../layouts/Layout.astro"; const { message, featured_spaces
-} = Astro.props;
+// Get props from locals
+const { featured_spaces, message } = Astro.locals.rubyProps;
+---
 
 <Layout title="Home - Roost">
-	<main class="container mx-auto px-4 py-8">
-		<h1 class="text-4xl font-bold mb-8">{message}</h1>
+	<main class="py-12 bg-gray-100">
+		<Container>
+			<div class="grid md:grid-cols-2 gap-8">
+				<!-- Left Column: Search and Map -->
+				<div class="space-y-8">
+					<div class="bg-white rounded-lg shadow-sm p-6">
+						<h2 class="text-2xl font-bold text-gray-800 mb-4">
+							{message}
+						</h2>
+						<p class="text-gray-600 mb-6">
+							Discover available study spaces across campus in real-time.
+							Whether you need a quiet corner or a group study room, Roost helps
+							you find the perfect spot.
+						</p>
+						<div class="flex flex-col sm:flex-row gap-4">
+							<Button
+								href="/search"
+								class="flex-1 bg-[#BA0C2F] hover:bg-[#98091F] text-white"
+							>
+								<SearchIcon class="w-5 h-5 mr-2" />
+								Search Spaces
+							</Button>
+							<Button
+								href="/map"
+								variant="outline"
+								class="flex-1 border-[#BA0C2F] text-[#BA0C2F] hover:bg-[#BA0C2F] hover:text-white"
+							>
+								<MapIcon class="w-5 h-5 mr-2" />
+								View Map
+							</Button>
+						</div>
+					</div>
 
-		{
-			featured_spaces && featured_spaces.length > 0 && (
-				<div class="space-y-4">
-					<h2 class="text-2xl font-semibold">Featured Study Spaces</h2>
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{featured_spaces.map((space: any) => (
-							<div class="p-4 bg-white shadow rounded-lg">
-								<h3 class="font-bold">{space.name}</h3>
-								<p class="text-gray-600">{space.description}</p>
-								<div class="mt-2">
-									<span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-										{space.status}
-									</span>
+					{
+						featured_spaces && featured_spaces.length > 0 && (
+							<div class="bg-white rounded-lg shadow-sm p-6">
+								<h2 class="text-xl font-semibold text-gray-800 mb-4">
+									Available Spaces
+								</h2>
+								<div class="space-y-4">
+									{featured_spaces.map((space) => (
+										<div class="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
+											<h3 class="font-semibold text-gray-800">{space.name}</h3>
+											<p class="text-sm text-gray-600">
+												{space.building.name} - Room {space.room_number}
+											</p>
+											<p class="text-sm text-gray-500">
+												Capacity: {space.capacity} • Noise Level:{" "}
+												{space.noise_level}
+											</p>
+										</div>
+									))}
 								</div>
 							</div>
-						))}
-					</div>
+						)
+					}
 				</div>
-			)
-		}
+
+				<!-- Right Column -->
+				<div class="space-y-8">
+					{/* Your existing right column content */}
+				</div>
+			</div>
+		</Container>
 	</main>
 </Layout>

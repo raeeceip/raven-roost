@@ -6,7 +6,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 
-// https://astro.build/config
 export default defineConfig({
   output: "server",
   adapter: node({
@@ -22,18 +21,25 @@ export default defineConfig({
           const generatedDir = new URL("generated/", import.meta.url);
           const pagesDir = new URL("pages/", generatedDir);
           const viewsDir = new URL("views/", pagesDir);
+
+          // Find all Astro views
           const views = await glob(["**/*.astro", "!pages/**/*.astro"], {
             cwd: fileURLToPath(referenceDir),
             onlyFiles: true,
           });
+
+          // Create generated views directory
           await mkdir(viewsDir, { recursive: true });
+
+          // Generate view wrappers
           for (const view of views) {
             const viewUrl = new URL(view, viewsDir);
             const viewRelativeToPage = path.relative(
               path.dirname(fileURLToPath(viewUrl)),
               fileURLToPath(new URL(view, referenceDir))
             );
-            // TODO: map props and slots
+
+            // Generate view wrapper with props handling
             const pageContent = `---
 import View from ${JSON.stringify(viewRelativeToPage)};
 const props = Astro.locals.rubyProps ?? {};
@@ -46,8 +52,9 @@ const props = Astro.locals.rubyProps ?? {};
             });
             await writeFile(viewUrl, pageContent);
           }
-          const envdtsUrl = new URL("env.d.ts", referenceDir);
 
+          // Handle TypeScript environment
+          const envdtsUrl = new URL("env.d.ts", referenceDir);
           if (!existsSync(envdtsUrl)) {
             const generatedEnvdtsUrl = new URL("env.d.ts", generatedDir);
             const relativePath = path.relative(
@@ -60,7 +67,7 @@ const props = Astro.locals.rubyProps ?? {};
             );
           }
 
-          // TODO: injectRoute()
+          // Copy the [...app].ts route handler
           await writeFile(
             new URL("[...app].ts", pagesDir),
             await readFile(new URL("[...app].ts", import.meta.url), "utf-8")
