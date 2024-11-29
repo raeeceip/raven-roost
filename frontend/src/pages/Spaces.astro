@@ -1,92 +1,155 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Card from "../components/Card.astro";
+import Container from "../components/Container.astro";
+import { Card } from "@/components/ui/card";
+import Button from "../components/Button.astro";
+import { ArrowLeft } from "lucide-react";
 
-// Server-side fetch
-let spaces: {
-	id: string;
-	name: string;
-	building: string;
-	capacity: number;
-	status: string;
-}[] = [];
+let spaces = [];
 let error = null;
 
 try {
-	const response = await fetch("http://localhost:3000/api/v1/spaces", {
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json",
-		},
-	});
-
-	if (!response.ok) {
-		throw new Error(`HTTP error! status: ${response.status}`);
+	if (!Astro.locals.runtime?.env?.DB) {
+		throw new Error("Database connection not available");
 	}
 
-	const data = await response.json();
-	spaces = data;
-} catch (e) {
-	console.error("Error fetching spaces:", e);
-	if (e instanceof Error) {
-		error = e.message;
-	} else {
-		error = String(e);
-	}
+	// Build the query
+	const query = `
+    SELECT 
+      id, 
+      name, 
+      building, 
+      floor, 
+      capacity, 
+      noise_level as noiseLevel,
+      amenities,
+      hours_open,
+      hours_close,
+      is_reservable,
+      coordinates_lat,
+      coordinates_lng,
+      description
+    FROM study_spaces
+    ORDER BY building, floor, name
+  `;
+
+	const { results } = await Astro.locals.runtime.env.DB.prepare(query).all();
+
+	// Get current hour for checking if space is open
+	const now = new Date();
+	const currentHour = `${now.getHours().toString().padStart(2, "0")}:00`;
+
+	spaces = (results as any[]).map((space) => ({
+		...space,
+		amenities: space.amenities ? space.amenities.split(",") : [],
+		isCurrentlyOpen:
+			currentHour >= space.hours_open && currentHour <= space.hours_close,
+	}));
+} catch (err) {
+	console.error("Error:", err);
+	error = err instanceof Error ? err.message : "Failed to load study spaces";
 }
 ---
 
 <Layout title="Study Spaces - Roost">
-	<main class="bg-gray-50 min-h-screen py-8">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-			<h1 class="text-3xl font-bold text-[#222222] mb-4">Study Spaces</h1>
-			<p class="text-[#767679] mb-8">
-				Find your perfect study spot at Carleton
-			</p>
+	<main class="pt-20 min-h-screen bg-gray-50">
+		<Container>
+			<div class="py-8">
+				<div class="flex items-center gap-4 mb-8">
+					<Button variant="outline" ref="/" class="items-center gap-2">
+						<ArrowLeft className="w-4 h-4" />
+						Back to Home
+					</Button>
+				</div>
 
-			{
-				error && (
-					<div
-						class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-8"
-						role="alert"
-					>
-						<strong class="font-bold">Error:</strong>
-						<span class="block sm:inline"> {error}</span>
-					</div>
-				)
-			}
+				<div class="mb-8">
+					<h1 class="text-3xl font-bold text-gray-900 mb-2">Study Spaces</h1>
+					<p class="text-gray-600">
+						Browse all available study spaces at Carleton
+					</p>
+				</div>
 
-			<ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{
-					spaces.map(
-						(space: {
-							id: string;
-							name: string;
-							building: string;
-							capacity: number;
-							status: string;
-						}) => (
-							<Card
-								href={`/spaces/${space.id}`}
-								title={space.name}
-								body={`${space.building} - Capacity: ${space.capacity}, Status: ${space.status}`}
-							/>
-						)
+					error && (
+						<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
+							{error}
+						</div>
 					)
 				}
-			</ul>
-		</div>
+
+				<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+					{
+						spaces.map((space) => (
+							<Card key={space.id}>
+								<a
+									href={`/spaces/${space.id}`}
+									class="block p-6 hover:bg-gray-50"
+								>
+									<div class="flex justify-between items-start">
+										<div>
+											<h3 class="text-lg font-semibold text-gray-900">
+												{space.name}
+											</h3>
+											<p class="text-sm text-gray-500">
+												{space.building} - Floor {space.floor}
+											</p>
+										</div>
+										<span
+											class={`px-2 py-1 text-xs rounded-full ${
+												space.isCurrentlyOpen
+													? "bg-green-100 text-green-800"
+													: "bg-red-100 text-red-800"
+											}`}
+										>
+											{space.isCurrentlyOpen ? "Open" : "Closed"}
+										</span>
+									</div>
+
+									<div class="mt-4 space-y-2">
+										<div class="flex justify-between text-sm">
+											<span class="text-gray-600">Capacity:</span>
+											<span class="font-medium">{space.capacity} seats</span>
+										</div>
+										<div class="flex justify-between text-sm">
+											<span class="text-gray-600">Noise Level:</span>
+											<span class="font-medium capitalize">
+												{space.noiseLevel}
+											</span>
+										</div>
+										<div class="flex justify-between text-sm">
+											<span class="text-gray-600">Hours:</span>
+											<span class="font-medium">
+												{space.hours_open} - {space.hours_close}
+											</span>
+										</div>
+									</div>
+
+									{space.amenities.length > 0 && (
+										<div class="mt-4">
+											<div class="text-xs text-gray-500 mb-2">Amenities:</div>
+											<div class="flex flex-wrap gap-1">
+												{space.amenities.map((amenity) => (
+													<span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+														{amenity.replace("_", " ")}
+													</span>
+												))}
+											</div>
+										</div>
+									)}
+								</a>
+							</Card>
+						))
+					}
+				</div>
+
+				{
+					spaces.length === 0 && !error && (
+						<div class="text-center py-12 text-gray-500">
+							No study spaces found
+						</div>
+					)
+				}
+			</div>
+		</Container>
 	</main>
 </Layout>
-
-<style>
-	:root {
-		--accent: 124, 58, 237;
-		--accent-gradient: linear-gradient(
-			45deg,
-			rgb(var(--accent)),
-			#da62c4 30%,
-			white 60%
-		);
-	}
-</style>

@@ -1,0 +1,17 @@
+name = "roost"
+compatibility_date = "2024-11-28"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "roost"
+database_id = "722a9f75-37cc-42a3-bcbf-3247d8edeb75" # You'll get this after creating the database
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "SPACES_KV"
+id = "331eaeb76d684aa5bf8c200192511a4c" # You'll get this after creating the namespace
+
+[[kv_namespaces]]
+binding = "USERS_KV"
+id = "294e5693cfc34f6a951fce5e0945bc82" # You'll get this after creating the namespace

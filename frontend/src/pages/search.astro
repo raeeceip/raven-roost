@@ -1,20 +1,50 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
-
 import SearchComponent from "../components/search/SearchComponent";
+import Button from "../components/Button.astro";
+import { ArrowLeft } from "lucide-react";
+
+// Verify database connection
+let error = null;
+try {
+	if (!Astro.locals.runtime?.env?.DB) {
+		throw new Error("Database connection not available");
+	}
+} catch (err) {
+	console.error("Error:", err);
+	error = err instanceof Error ? err.message : "Failed to connect to database";
+}
 ---
 
 <Layout title="Search Study Spaces - Roost">
 	<main class="pt-20 min-h-screen bg-gray-50">
 		<Container>
 			<div class="py-8">
-				<h1 class="text-3xl font-bold text-carleton-black mb-4">
-					Search Study Spaces
-				</h1>
-				<p class="text-gray-600 mb-8">
-					Find the perfect study space for your needs
-				</p>
+				<div class="flex items-center gap-4 mb-8">
+					<Button variant="outline" href="/" client:load>
+						<ArrowLeft className="w-4 h-4 mr-2" />
+						Back to Home
+					</Button>
+				</div>
+
+				{
+					error && (
+						<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
+							{error}
+						</div>
+					)
+				}
+
+				<div class="mb-8">
+					<h1 class="text-3xl font-bold text-gray-900 mb-2">
+						Search Study Spaces
+					</h1>
+					<p class="text-gray-600">
+						Find the perfect study space for your needs. Filter by building,
+						capacity, and noise level.
+					</p>
+				</div>
 
 				<SearchComponent client:load />
 			</div>

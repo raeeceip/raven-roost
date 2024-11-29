@@ -1,0 +1,50 @@
+---
+// src/components/SpacesTester.astro
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+// Fetch data at build time
+let spaces = [];
+let error = null;
+
+try {
+	const response = await fetch("http://localhost:3000/api/spaces");
+	const data = await response.json();
+	spaces = data.data || [];
+} catch (err) {
+	error = err.message;
+}
+---
+
+<div class="p-4 space-y-4">
+	<h1 class="text-2xl font-bold mb-4">Study Spaces</h1>
+
+	{error && <div class="p-4 text-red-500">Error: {error}</div>}
+
+	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+		{
+			spaces.map((space) => (
+				<div class="bg-white rounded-lg shadow-sm p-6">
+					<h2 class="text-xl font-semibold text-gray-800 mb-4">{space.name}</h2>
+					<dl class="space-y-2">
+						<div>
+							<dt class="text-sm font-medium text-gray-500">Building</dt>
+							<dd>{space.building}</dd>
+						</div>
+						<div>
+							<dt class="text-sm font-medium text-gray-500">Floor</dt>
+							<dd>{space.floor}</dd>
+						</div>
+						<div>
+							<dt class="text-sm font-medium text-gray-500">Capacity</dt>
+							<dd>{space.capacity}</dd>
+						</div>
+						<div>
+							<dt class="text-sm font-medium text-gray-500">Noise Level</dt>
+							<dd>{space.noise_level}</dd>
+						</div>
+					</dl>
+				</div>
+			))
+		}
+	</div>
+</div>

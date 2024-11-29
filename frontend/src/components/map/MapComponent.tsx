@@ -1,65 +1,63 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const MapComponent = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
+const MapComponent = ({ spaces }) => {
+  const mapRef = useRef(null);
+  const [map, setMap] = useState(null);
 
   useEffect(() => {
-    // Fix Leaflet's default icon path issues
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: '/marker-icon-2x.png',
-      iconUrl: '/marker-icon.png',
-      shadowUrl: '/marker-shadow.png',
-    });
-
-    if (typeof window !== 'undefined' && mapRef.current && !mapInstance.current) {
-      // Carleton University coordinates
-      const carletonCoords: L.LatLngTuple = [45.3850, -75.6972];
-      
-      // Create map instance
-      mapInstance.current = L.map(mapRef.current).setView(carletonCoords, 16);
-
-      // Add tile layer
+    if (typeof window !== 'undefined' && !map) {
+      const newMap = L.map(mapRef.current).setView([45.3850, -75.6972], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-      }).addTo(mapInstance.current);
-
-      // Add example study spaces
-      const studySpaces = [
-        { name: 'MacOdrum Library', coords: [45.3832, -75.6982], availability: 'High' },
-        { name: 'University Centre', coords: [45.3847, -75.6972], availability: 'Medium' },
-        { name: 'Richcraft Hall', coords: [45.3855, -75.6963], availability: 'Low' },
-      ];
-
-      studySpaces.forEach(space => {
-        L.marker([space.coords[0], space.coords[1]])
-          .bindPopup(`
-            <div class="space-info">
-              <h3 class="font-bold">${space.name}</h3>
-              <p>Availability: ${space.availability}</p>
-              <button class="px-4 py-2 bg-blue-500 text-white rounded mt-2">
-                View Details
-              </button>
-            </div>
-          `)
-          .addTo(mapInstance.current!);
-      });
+      }).addTo(newMap);
+      setMap(newMap);
     }
 
-    // Cleanup function
-    return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-    };
+    return () => map?.remove();
   }, []);
 
+  useEffect(() => {
+    if (map && spaces.length > 0) {
+      spaces.forEach(space => {
+        const marker = L.marker([space.lat, space.lng])
+          .addTo(map)
+          .bindPopup(`
+            <h3>${space.name}</h3>
+            <p>${space.building} - Floor ${space.floor}</p>
+            <a href="/spaces/${space.id}" class="text-blue-500 hover:underline">View Details</a>
+          `);
+
+        marker.on('click', () => {
+          map.setView([space.lat, space.lng], 18);
+        });
+      });
+    }
+  }, [map, spaces]);
+
+  const focusOnBuilding = (buildingName) => {
+    const space = spaces.find(s => s.building === buildingName);
+    if (space && map) {
+      map.setView([space.lat, space.lng], 18);
+    }
+  };
+
   return (
-    <div ref={mapRef} className="h-[600px] w-full rounded-lg overflow-hidden" />
+    <div>
+      <div ref={mapRef} style={{ height: '500px' }} />
+      <div className="mt-4">
+        {spaces.map(space => (
+          <button
+            key={space.id}
+            onClick={() => focusOnBuilding(space.building)}
+            className="mr-2 mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {space.building}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 

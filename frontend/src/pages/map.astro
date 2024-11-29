@@ -1,88 +1,94 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import MapComponent from "../components/map/MapComponent";
+import Button from "../components/Button.astro";
+import Card from "../components/Card.astro";
+import MapComponent from "../components/MapComponent.astro";
+import { Icon } from "astro-icon/components";
+
+// Get spaces from D1 database
+let error = null;
+let spaces = [];
+try {
+	if (!Astro.locals.runtime?.env?.DB) {
+		throw new Error("Database connection not available");
+	}
+
+	const { results } = await Astro.locals.runtime.env.DB.prepare(
+		"SELECT * FROM study_spaces"
+	).all();
+	spaces = results;
+} catch (err) {
+	console.error("Error:", err);
+	error = err instanceof Error ? err.message : "Failed to fetch study spaces";
+}
 ---
 
 <Layout title="Campus Map - Roost">
 	<main class="pt-20 min-h-screen bg-gray-50">
 		<Container>
 			<div class="py-8">
-				<h1 class="text-3xl font-bold text-carleton-black mb-4">Campus Map</h1>
+				<h1 class="text-3xl font-bold text-gray-900 mb-4">Campus Map</h1>
 				<p class="text-gray-600 mb-8">
 					Find study spaces across Carleton campus
 				</p>
 
+				{
+					error && (
+						<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
+							{error}
+						</div>
+					)
+				}
+
 				<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					<Card className="lg:col-span-2">
-						<CardContent className="p-0">
-							<MapComponent client:only="react" />
-						</CardContent>
+						<MapComponent spaces={spaces} />
 					</Card>
 
 					<div class="space-y-6">
-						<Card>
-							<CardHeader>
-								<CardTitle>Legend</CardTitle>
-								<CardDescription>Map markers and their meanings</CardDescription
-								>
-							</CardHeader>
-							<CardContent>
-								<ul class="space-y-2">
-									<li class="flex items-center gap-2">
-										<div class="w-4 h-4 rounded-full bg-green-500"></div>
-										<span>Available Spaces</span>
-									</li>
-									<li class="flex items-center gap-2">
-										<div class="w-4 h-4 rounded-full bg-yellow-500"></div>
-										<span>Limited Availability</span>
-									</li>
-									<li class="flex items-center gap-2">
-										<div class="w-4 h-4 rounded-full bg-carleton-red"></div>
-										<span>Full</span>
-									</li>
-								</ul>
-							</CardContent>
+						<Card title="Legend" body="Map markers and their meanings" href="#">
+							<h3 class="text-lg font-medium text-gray-900 mb-2">Legend</h3>
+							<p class="text-sm text-gray-500 mb-4">
+								Map markers and their meanings
+							</p>
+							<ul class="space-y-2">
+								<li class="flex items-center gap-2">
+									<div class="w-4 h-4 rounded-full bg-green-500"></div>
+									<span>Available Spaces</span>
+								</li>
+								<li class="flex items-center gap-2">
+									<div class="w-4 h-4 rounded-full bg-yellow-500"></div>
+									<span>Limited Availability</span>
+								</li>
+								<li class="flex items-center gap-2">
+									<div class="w-4 h-4 rounded-full bg-red-500"></div>
+									<span>Full</span>
+								</li>
+							</ul>
 						</Card>
 
 						<Card>
-							<CardHeader>
-								<CardTitle>Quick Navigation</CardTitle>
-								<CardDescription>Jump to popular buildings</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<div class="space-y-2">
-									<Button
-										variant="outline"
-										className="w-full justify-start"
-										data-building="library"
-									>
-										MacOdrum Library
-									</Button>
-									<Button
-										variant="outline"
-										className="w-full justify-start"
-										data-building="uc"
-									>
-										University Centre
-									</Button>
-									<Button
-										variant="outline"
-										className="w-full justify-start"
-										data-building="richcraft"
-									>
-										Richcraft Hall
-									</Button>
-								</div>
-							</CardContent>
+							<h3 class="text-lg font-medium text-gray-900 mb-2">
+								Quick Navigation
+							</h3>
+							<p class="text-sm text-gray-500 mb-4">
+								Jump to popular buildings
+							</p>
+							<div class="space-y-2">
+								{
+									spaces.map((space: { building: unknown }) => (
+										<Button
+											variant="outline"
+											class="w-full justify-start"
+											data-building={space.building}
+										>
+											<Icon name="mdi:building" class="w-5 h-5 mr-2" />
+											{space.building}
+										</Button>
+									))
+								}
+							</div>
 						</Card>
 					</div>
 				</div>

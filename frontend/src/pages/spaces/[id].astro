@@ -1,0 +1,138 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Container from "../../components/Container.astro";
+import Button from "../../components/Button.astro";
+import { Icon } from "astro-icon/components";
+
+export async function getStaticPaths(): Promise<{ params: { id: string } }[]> {
+	const { results } = await Astro.locals.runtime.env.DB.prepare(
+		"SELECT id FROM study_spaces"
+	).all();
+	return results.map(({ id }) => ({ params: { id } }));
+}
+
+const { id } = Astro.params;
+let space;
+let error;
+
+try {
+	const { results } = await Astro.locals.runtime.env.DB.prepare(
+		"SELECT * FROM study_spaces WHERE id = ?"
+	)
+		.bind(id)
+		.all();
+	space = results[0];
+} catch (err) {
+	console.error("Error:", err);
+	error = err instanceof Error ? err.message : "Failed to fetch study space";
+}
+---
+
+<Layout title={space ? `${space.name} - Roost` : "Study Space - Roost"}>
+	<main class="pt-20 min-h-screen bg-gray-50">
+		<Container>
+			{
+				error && (
+					<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
+						{error}
+					</div>
+				)
+			}
+
+			{
+				space && (
+					<div class="bg-white shadow-sm rounded-lg p-6">
+						<h1 class="text-3xl font-bold text-gray-900 mb-4">{space.name}</h1>
+						<p class="text-gray-600 mb-6">
+							{space.building} - Floor {space.floor}
+						</p>
+
+						<div class="grid md:grid-cols-2 gap-8">
+							<div>
+								<h2 class="text-xl font-semibold mb-4">Details</h2>
+								<ul class="space-y-2">
+									<li>
+										<strong>Capacity:</strong> {space.capacity}
+									</li>
+									<li>
+										<strong>Noise Level:</strong> {space.noise_level}
+									</li>
+									<li>
+										<strong>Hours:</strong> {space.hours_open} -{" "}
+										{space.hours_close}
+									</li>
+									<li>
+										<strong>Amenities:</strong> {space.amenities}
+									</li>
+								</ul>
+							</div>
+							<div>
+								<h2 class="text-xl font-semibold mb-4">Current Status</h2>
+								<p class="text-lg font-medium">
+									{/* You'll need to implement real-time status updates here */}
+									Status: <span class="text-green-600">Available</span>
+								</p>
+								<p class="mt-2">
+									Last updated: <span id="lastUpdated" />
+								</p>
+							</div>
+						</div>
+
+						<div class="mt-8">
+							<Button href="/map" variant="outline" class="mr-4">
+								<Icon name="mdi:map" class="w-5 h-5 mr-2" />
+								Back to Map
+							</Button>
+							<Button id="checkInButton">
+								<Icon name="mdi:login" class="w-5 h-5 mr-2" />
+								Check In
+							</Button>
+						</div>
+					</div>
+				)
+			}
+		</Container>
+	</main>
+</Layout>
+
+<script>
+	const lastUpdatedSpan = document.getElementById("lastUpdated");
+	const checkInButton = document.getElementById("checkInButton");
+
+	function updateLastUpdated() {
+		if (lastUpdatedSpan) {
+			lastUpdatedSpan.textContent = new Date().toLocaleTimeString();
+		}
+	}
+
+	setInterval(updateLastUpdated, 60000);
+
+	if (checkInButton) {
+		checkInButton.addEventListener("click", async () => {
+			const spaceId = checkInButton.getAttribute("data-space-id");
+			const userId = "test-user-id"; // Replace with actual user ID from authentication
+
+			try {
+				const response = await fetch("/api/check-in", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ spaceId, userId }),
+				});
+
+				const result = await response.json();
+
+				if (result.success) {
+					alert("Check-in successful!");
+					// Update UI to reflect check-in status
+				} else {
+					throw new Error(result.error || "Check-in failed");
+				}
+			} catch (error) {
+				console.error("Check-in error:", error);
+				alert("Check-in failed. Please try again.");
+			}
+		});
+	}
+</script>

@@ -1,0 +1,62 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	spaces: any[]; // Replace 'any' with your actual space type
+}
+
+const { spaces } = Astro.props;
+---
+
+<div id="map" class="h-[600px] w-full rounded-lg overflow-hidden"></div>
+
+<script define:vars={{ spaces }}>
+	import L from "leaflet";
+
+	document.addEventListener("DOMContentLoaded", () => {
+		// Initialize map
+		const map = L.map("map").setView([45.385, -75.6972], 15); // Carleton University coordinates
+
+		L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+			attribution: "© OpenStreetMap contributors",
+		}).addTo(map);
+
+		// Add markers for each space
+		spaces.forEach((space) => {
+			const marker = L.marker([space.lat, space.lng]).addTo(map);
+
+			marker.bindPopup(`
+        <div class="space-info">
+          <h3 class="font-bold">${space.name}</h3>
+          <p>Building: ${space.building}</p>
+          <p>Capacity: ${space.capacity}</p>
+          <p>Noise Level: ${space.noise_level}</p>
+          <a href="/spaces/${space.id}" class="text-blue-500 hover:underline">View Details</a>
+        </div>
+      `);
+		});
+
+		// Function to focus on a specific building
+		window.focusOnBuilding = (building) => {
+			const space = spaces.find((s) => s.building === building);
+			if (space) {
+				map.setView([space.lat, space.lng], 18);
+			}
+		};
+	});
+</script>
+
+<script>
+	// This script will run on the client-side
+	document.querySelectorAll("[data-building]").forEach((button) => {
+		button.addEventListener("click", (e) => {
+			const currentTarget = e.currentTarget;
+			if (currentTarget) {
+				const building = currentTarget.getAttribute("data-building");
+				if (building && window.focusOnBuilding) {
+					window.focusOnBuilding(building);
+				}
+			}
+		});
+	});
+</script>

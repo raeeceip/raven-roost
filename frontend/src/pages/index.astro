@@ -1,15 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Container from "../components/Container.astro";
-import { Button } from "../components/ui/button";
-import {
-	MapIcon,
-	SearchIcon,
-	ClockIcon,
-	CompassIcon,
-	FilterIcon,
-	ArrowRightIcon,
-} from "lucide-react";
+import Button from "../components/Button.astro";
+import { Icon } from "astro-icon/components";
 ---
 
 <Layout title="Home - Roost">
@@ -28,19 +21,12 @@ import {
 							you find the perfect spot.
 						</p>
 						<div class="flex flex-col sm:flex-row gap-4">
-							<Button
-								href="/search"
-								class="flex-1 bg-[#BA0C2F] hover:bg-[#98091F] text-white"
-							>
-								<SearchIcon class="w-5 h-5 mr-2" />
+							<Button href="/map" variant="outline" class="flex-1">
+								<Icon name="mdi:magnify" class="w-5 h-5 mr-2" />
 								Search Spaces
 							</Button>
-							<Button
-								href="/map"
-								variant="outline"
-								class="flex-1 border-[#BA0C2F] text-[#BA0C2F] hover:bg-[#BA0C2F] hover:text-white"
-							>
-								<MapIcon class="w-5 h-5 mr-2" />
+							<Button href="/map" variant="outline" class="flex-1">
+								<Icon name="mdi:map" class="w-5 h-5 mr-2" />
 								View Map
 							</Button>
 						</div>
@@ -63,7 +49,19 @@ import {
 						</h2>
 						<ul class="space-y-4">
 							<li class="flex items-start">
-								<ClockIcon class="w-6 h-6 text-[#BA0C2F] mr-3 flex-shrink-0" />
+								<svg
+									class="w-6 h-6 text-[#BA0C2F] mr-3 flex-shrink-0"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+								</svg>
 								<div>
 									<h3 class="font-semibold text-gray-800">
 										Real-time Availability
@@ -75,7 +73,8 @@ import {
 								</div>
 							</li>
 							<li class="flex items-start">
-								<CompassIcon
+								<Icon
+									name="mdi:compass-outline"
 									class="w-6 h-6 text-[#BA0C2F] mr-3 flex-shrink-0"
 								/>
 								<div>
@@ -86,7 +85,10 @@ import {
 								</div>
 							</li>
 							<li class="flex items-start">
-								<FilterIcon class="w-6 h-6 text-[#BA0C2F] mr-3 flex-shrink-0" />
+								<Icon
+									name="mdi:filter-outline"
+									class="w-6 h-6 text-[#BA0C2F] mr-3 flex-shrink-0"
+								/>
 								<div>
 									<h3 class="font-semibold text-gray-800">Advanced Search</h3>
 									<p class="text-gray-600">
@@ -109,7 +111,7 @@ import {
 							class="w-full bg-white text-[#BA0C2F] hover:bg-gray-100"
 						>
 							Get Started Now
-							<ArrowRightIcon class="w-5 h-5 ml-2" />
+							<Icon name="mdi:arrow-right" class="w-5 h-5 ml-2" />
 						</Button>
 					</div>
 				</div>
